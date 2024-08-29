@@ -143,10 +143,16 @@ fn get_shell_lvl(components: &mut Vec<PromptComponent>) {
     let shell_level: Result<String, std::env::VarError> = std::env::var("SHLVL");
 
     if shell_level.is_ok() {
-        components.push(PromptComponent::bold(
-            &format!("shell level {}", shell_level.unwrap()),
-            Colour::Purple
-        ))
+        match shell_level.unwrap().parse::<i32>() {
+            Ok(n) => {
+                components.push(PromptComponent::new("at", Style::new()));
+                components.push(PromptComponent::bold(
+                    &format!("shlvl {}", n),
+                    Colour::Purple
+                ));
+            }
+            Err(_e) => {}
+        }
     }
 }
 
