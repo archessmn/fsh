@@ -114,10 +114,10 @@ fn main() {
 
     let repo = Repository::discover(".").ok();
 
+    get_shell_lvl(&mut components);
+
     components.push(PromptComponent::unstyled("in"));
     components.push(PromptComponent::bold(&dir, Colour::Green));
-
-    get_shell_lvl(&mut components);
 
     get_git_info(&mut components, &repo);
 
@@ -145,11 +145,13 @@ fn get_shell_lvl(components: &mut Vec<PromptComponent>) {
     if shell_level.is_ok() {
         match shell_level.unwrap().parse::<i32>() {
             Ok(n) => {
-                components.push(PromptComponent::new("at", Style::new()));
-                components.push(PromptComponent::bold(
-                    &format!("shlvl {}", n),
-                    Colour::Purple
-                ));
+                if n > 1 {
+                    components.push(PromptComponent::new("at", Style::new()));
+                    components.push(PromptComponent::bold(
+                        &format!("shlvl {}", n),
+                        Colour::Purple
+                    ));
+                }
             }
             Err(_e) => {}
         }
