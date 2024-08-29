@@ -117,6 +117,8 @@ fn main() {
     components.push(PromptComponent::unstyled("in"));
     components.push(PromptComponent::bold(&dir, Colour::Green));
 
+    get_shell_lvl(&mut components);
+
     get_git_info(&mut components, &repo);
 
     if last_status == 0 {
@@ -134,6 +136,17 @@ fn main() {
         } else {
             print!("{}", component);
         }
+    }
+}
+
+fn get_shell_lvl(components: &mut Vec<PromptComponent>) {
+    let shell_level: Result<String, std::env::VarError> = std::env::var("SHLVL");
+
+    if shell_level.is_ok() {
+        components.push(PromptComponent::bold(
+            &format!("shell level {}", shell_level.unwrap()),
+            Colour::Purple
+        ))
     }
 }
 
