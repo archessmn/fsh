@@ -38,7 +38,6 @@
         ++ lib.optionals pkgs.stdenv.isDarwin [
           # Additional darwin specific inputs can be set here
           pkgs.zlib
-          pkgs.darwin.apple_sdk.frameworks.Security
           pkgs.libiconv
         ];
 
