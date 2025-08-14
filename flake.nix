@@ -6,13 +6,21 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, crane, flake-utils }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      crane,
+      flake-utils,
+    }:
     {
       overlays.default = final: prev: {
         inherit (self.packages.${prev.system}) fsh;
       };
       homeModules.fsh = import ./home.nix;
-    } // flake-utils.lib.eachDefaultSystem (system:
+    }
+    // flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           system = system;
@@ -24,9 +32,12 @@
         src = craneLib.cleanCargoSource ./.;
 
         buildInputs = [
-          pkgs.pkg-config pkgs.openssl
-        ] ++ lib.optionals pkgs.stdenv.isDarwin [
+          pkgs.pkg-config
+          pkgs.openssl
+        ]
+        ++ lib.optionals pkgs.stdenv.isDarwin [
           # Additional darwin specific inputs can be set here
+          pkgs.darwin.apple_sdk.frameworks.Security
           pkgs.libiconv
         ];
 
@@ -40,46 +51,47 @@
           inherit cargoArtifacts src buildInputs;
         };
       in
-    {
-      checks = {
-        # Build the crate as part of `nix flake check` for convenience
-        inherit fsh;
+      {
+        checks = {
+          # Build the crate as part of `nix flake check` for convenience
+          inherit fsh;
 
-        # Run clippy (and deny all warnings) on the crate source,
-        # again, resuing the dependency artifacts from above.
-        #
-        # Note that this is done as a separate derivation so that
-        # we can block the CI if there are issues here, but not
-        # prevent downstream consumers from building our crate by itself.
-        fsh-clippy = craneLib.cargoClippy {
-          inherit cargoArtifacts src buildInputs;
-          cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+          # Run clippy (and deny all warnings) on the crate source,
+          # again, resuing the dependency artifacts from above.
+          #
+          # Note that this is done as a separate derivation so that
+          # we can block the CI if there are issues here, but not
+          # prevent downstream consumers from building our crate by itself.
+          fsh-clippy = craneLib.cargoClippy {
+            inherit cargoArtifacts src buildInputs;
+            cargoClippyExtraArgs = "--all-targets -- --deny warnings";
+          };
+
+          # Check formatting
+          fsh-fmt = craneLib.cargoFmt {
+            inherit src;
+          };
         };
 
-        # Check formatting
-        fsh-fmt = craneLib.cargoFmt {
-          inherit src;
+        packages.fsh = fsh;
+        packages.default = self.packages.${system}.fsh;
+
+        apps.default = flake-utils.lib.mkApp {
+          drv = fsh;
         };
-      };
 
-      packages.fsh = fsh;
-      packages.default = self.packages.${system}.fsh;
+        devShells.default = pkgs.mkShell {
+          inputsFrom = builtins.attrValues self.checks;
 
-      apps.default = flake-utils.lib.mkApp {
-        drv = fsh;
-      };
-
-      devShells.default = pkgs.mkShell {
-        inputsFrom = builtins.attrValues self.checks;
-
-        # Extra inputs can be added here
-        nativeBuildInputs = with pkgs; [
-          cargo
-          rustc
-          rustfmt
-          pkg-config
-          openssl
-        ];
-      };
-    });
+          # Extra inputs can be added here
+          nativeBuildInputs = with pkgs; [
+            cargo
+            rustc
+            rustfmt
+            pkg-config
+            openssl
+          ];
+        };
+      }
+    );
 }
