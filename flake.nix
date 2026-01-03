@@ -14,7 +14,7 @@
     }:
     {
       overlays.default = final: prev: {
-        inherit (self.packages.${prev.system}) fsh;
+        inherit (self.packages.${prev.stdenv.hostPlatform.system}) fsh;
       };
       homeModules.fsh = import ./home.nix;
     }
