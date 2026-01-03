@@ -2,7 +2,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     crane.url = "github:ipetkov/crane";
-    crane.inputs.nixpkgs.follows = "nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -27,7 +26,7 @@
         };
         inherit (pkgs) lib;
 
-        craneLib = crane.lib.${system};
+        craneLib = crane.mkLib pkgs;
 
         src = craneLib.cleanCargoSource ./.;
 
